@@ -88,11 +88,12 @@ This is useful because the atchka theme obfuscates block markup."
                       :height (truncate (* atchka--org-block-header-height 10))
                       :foreground (face-attribute 'org-block-begin-line :background)))
 
-(defun org-skip-source-next-advice ()
+(defun org-skip-source-next-advice (funct &rest args)
   "Advice for the `next-line' function.
 Please `next-line' past org-block headers'"
   (interactive)
   (when (and (eq major-mode 'org-mode)
+
              (save-excursion
                (forward-line)
                (call-interactively 'beginning-of-line)
@@ -101,14 +102,14 @@ Please `next-line' past org-block headers'"
                                    (line-end-position) t)
                 (re-search-forward "#\\+end_src[ ]*?"
                                    (line-end-position) t))))
-    (forward-line)))
+    (forward-line))
+  (funcall funct args))
 
-(defun org-skip-source-previous-advice ()
+(defun org-skip-source-previous-advice (funct &rest args)
   "Advice for the `previous-line' function.
 Please `previous-line' past org-block headers'"
   (interactive)
-  (when (and
-         (eq major-mode 'org-mode)
+  ((when (and (eq major-mode 'org-mode)
          (save-excursion
           (forward-line -1)
           (call-interactively 'beginning-of-line)
@@ -118,6 +119,7 @@ Please `previous-line' past org-block headers'"
            (re-search-forward "#\\+end_src[ ]*?"
                               (line-end-position) t))))
     (forward-line -1)))
+  (funcall funct args))
 
 (defun protect-faces-region (begin end)
   (interactive "r")
