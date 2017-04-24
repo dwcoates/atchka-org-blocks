@@ -1,4 +1,4 @@
-;;; atchka-org --- A nice-looking way of presenting Org interactive programs
+;;; atchka-org-blocks --- A nice-looking way of presenting Org code blocks
 ;;
 ;;; Commentary:
 ;;
@@ -182,6 +182,6 @@ Please `previous-line' past org-block headers'"
   (when (not window-system)
     (custom-set-faces '(default ((t (:background nil)))))))
 
-(provide 'atchka-org)
+(provide 'atchka-org-blocks)
 
 ;;; atchka-org ends here
