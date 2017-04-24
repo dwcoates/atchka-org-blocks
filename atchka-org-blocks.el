@@ -1,13 +1,10 @@
-;;; atchka-org --- A nice-looking way of presenting Org source blocks
+;;; atchka-org --- A nice-looking way of presenting Org interactive programs
 ;;
 ;;; Commentary:
 ;;
-;; Author: Dodge W. Coates
-;;
-;; Inspired by Alisa Leshchenko, coolest gal in the world.
+;; Dodge W. Coates.  Inspired by Alisa Leshchenko, coolest gal in the world.
 ;;
 ;;; Code:
-
 
 (require 'org)
 
@@ -20,12 +17,12 @@
 
 (defface atchka-org-block-lines-face
   `((((background dark))
-     (:background "#00688b"
-                  :foreground "#00688b"
+     (:background "#8b475d"
+                  :foreground "#8b475d"
                   :height ,atchka--org-block-header-height))
     (((background light))
-     '(:background "#00688b"
-                   :foreground "#00688b"
+     '(:background "#8b475d"
+                   :foreground "#8b475d"
                    :height ,atchka--org-block-header-height)))
   "Face used for source block content"
   :group 'atchka-org-faces)
@@ -42,10 +39,11 @@
     "octave" "oz" "perl" "plantuml" "python" "R" "ruby" "sass"
     "scheme" "ob-doc-screen" "sh" "sql" "sqlite" "ipython" "org" "example"))
 
-;; I don't know why this is still necessasry. I would like to get rid of it.
-(setq org-src-block-faces
-      (mapcar (lambda (lang) (list lang 'atchka-org-source-block-face))
-              atchka-org-babel-languages))
+(defvar atchka-org-src-block-faces-backup org-src-block-faces)
+
+;; Source block content
+(setq org-src-fontify-natively t     ; syntax highlighting in source blocks
+      org-src-tab-acts-natively t)   ; expected tabbing in source block
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;; ORG SOURCE BLOCKS ;;;;;;;;;;;;;
@@ -88,12 +86,11 @@ This is useful because the atchka theme obfuscates block markup."
                       :height (truncate (* atchka--org-block-header-height 10))
                       :foreground (face-attribute 'org-block-begin-line :background)))
 
-(defun org-skip-source-next-advice (funct &rest args)
+(defun org-skip-source-next-advice ()
   "Advice for the `next-line' function.
 Please `next-line' past org-block headers'"
   (interactive)
   (when (and (eq major-mode 'org-mode)
-
              (save-excursion
                (forward-line)
                (call-interactively 'beginning-of-line)
@@ -102,14 +99,14 @@ Please `next-line' past org-block headers'"
                                    (line-end-position) t)
                 (re-search-forward "#\\+end_src[ ]*?"
                                    (line-end-position) t))))
-    (forward-line))
-  (funcall funct args))
+    (forward-line)))
 
-(defun org-skip-source-previous-advice (funct &rest args)
+(defun org-skip-source-previous-advice ()
   "Advice for the `previous-line' function.
 Please `previous-line' past org-block headers'"
   (interactive)
-  ((when (and (eq major-mode 'org-mode)
+  (when (and
+         (eq major-mode 'org-mode)
          (save-excursion
           (forward-line -1)
           (call-interactively 'beginning-of-line)
@@ -119,7 +116,6 @@ Please `previous-line' past org-block headers'"
            (re-search-forward "#\\+end_src[ ]*?"
                               (line-end-position) t))))
     (forward-line -1)))
-  (funcall funct args))
 
 (defun protect-faces-region (begin end)
   (interactive "r")
@@ -140,6 +136,7 @@ Please `previous-line' past org-block headers'"
        (t nil))
       (goto-char next))))
 
+;;;###autoload
 (define-minor-mode atchka-org-minor-mode
   "Minor mode for improving org-mode source code appearance."
   :init-value nil
@@ -150,27 +147,32 @@ Please `previous-line' past org-block headers'"
          ;; yasnippet
          (add-hook 'yas-before-expand-snippet-hook 'yas--show-org-block-lines t)
          (add-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines t)
-         ;; pretty
-         (add-hook 'org-mode-hook 'atchka-org/pretty-symbols-org-mode-hook)
          ;; next/prev line
          (advice-add 'next-line :before 'org-skip-source-next-advice)
          (advice-add 'previous-line :before 'org-skip-source-previous-advice)
+         ;; set faces
          (set-face-attribute 'org-block nil :inherit 'atchka-org-source-block-face)
          (set-face-attribute 'org-block-begin-line nil :inherit 'atchka-org-block-lines-face)
-         (set-face-attribute 'org-block-end-line nil :inherit 'atchka-org-block-lines-face))
+         (set-face-attribute 'org-block-end-line nil :inherit 'atchka-org-block-lines-face)
+         ;; source blocks
+         (setq org-src-block-faces ;; I don't know why this is still necessasry
+               (mapcar (lambda (lang) (list lang 'atchka-org-source-block-face))
+                       atchka-org-babel-languages)))
         (t
          ;; yasnippet
          (when (require 'yasnippet nil t)
            (remove-hook 'yas-before-expand-snippet-hook 'yas--show-org-block-lines)
            (remove-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines))
-         ;; pretty
-         (remove-hook 'org-mode-hook 'atchka-org/pretty-symbols-org-mode-hook)
          ;; next/prev line
          (advice-remove 'next-line 'org-skip-source-next-advice)
          (advice-remove 'previous-line 'org-skip-source-previous-advice)
+         ;; unset faces
          (set-face-attribute 'org-block nil :inherit nil)
          (set-face-attribute 'org-block-begin-line nil :inherit nil)
-         (set-face-attribute 'org-block-end-line nil :inherit nil))))
+         (set-face-attribute 'org-block-end-line nil :inherit nil)
+         ;; source blocks
+         (setq org-src-block-faces atchka-org-src-block-faces-backup)))
+  (org-restart-font-lock))
 
 ;;;###autoload
 (when load-file-name
@@ -179,6 +181,6 @@ Please `previous-line' past org-block headers'"
   (when (not window-system)
     (custom-set-faces '(default ((t (:background nil)))))))
 
-(provide 'atchka-org-blocks)
+(provide 'atchka-org)
 
-;;; atchka-org-blocks ends here
+;;; atchka-org ends here
