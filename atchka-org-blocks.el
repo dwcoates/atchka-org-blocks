@@ -49,28 +49,6 @@
 ;;;;;;;;;;; ORG SOURCE BLOCKS ;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(when (require 'yasnippet nil t)
-  (defun yas--show-org-block-lines ()
-    "Enlarge block lines when in an Org buffer.
-This is used to show hidden blocks in `org-mode' while expanding a snippet."
-    (interactive)
-    (when (and (boundp 'yas-minor-mode) (equal yas-minor-mode t))
-      (let ((s (buffer-substring-no-properties
-                (line-beginning-position) (point))))
-        (when
-            (member
-             s (apply 'append
-                      (mapcar
-                       (lambda (dir)
-                         (let ((dir (concat
-                                     (file-name-as-directory
-                                      (if (symbolp dir) (symbol-value dir) dir))
-                                     "org-mode")))
-                           (when (f-directory-p dir)
-                             (directory-files dir))))
-                       yas-snippet-dirs)))
-          (org-show-block-lines))))))
-
 (defun org-show-block-lines ()
   "Show the Org-block lines.
 This is useful because the atchka theme obfuscates block markup."
@@ -146,7 +124,7 @@ Please `previous-line' past org-block headers'"
             ((kbd "C-c C-v C-:") . org-hide-block-lines))
   (cond (atchka-org-minor-mode
          ;; yasnippet
-         (add-hook 'yas-before-expand-snippet-hook 'yas--show-org-block-lines t)
+         (add-hook 'yas-before-expand-snippet-hook 'org-show-block-lines t)
          (add-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines)
          ;; next/prev line
          (advice-add 'next-line :before 'org-skip-source-next-advice)
@@ -162,7 +140,7 @@ Please `previous-line' past org-block headers'"
         (t
          ;; yasnippet
          (when (require 'yasnippet nil t)
-           (remove-hook 'yas-before-expand-snippet-hook 'yas--show-org-block-lines)
+           (remove-hook 'yas-before-expand-snippet-hook 'org-show-block-lines)
            (remove-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines))
          ;; next/prev line
          (advice-remove 'next-line 'org-skip-source-next-advice)
