@@ -57,17 +57,18 @@ This is used to show hidden blocks in `org-mode' while expanding a snippet."
     (when (and (boundp 'yas-minor-mode) (equal yas-minor-mode t))
       (let ((s (buffer-substring-no-properties
                 (line-beginning-position) (point))))
-        (when (member s
-                      (apply
-                       'append
-                       (mapcar
-                        (lambda (dir)
-                          (let ((dir (concat (file-name-as-directory
-                                              (if (symbolp dir) (symbol-value dir) dir))
-                                             "org-mode")))
-                            (when (f-directory-p dir)
-                              (directory-files dir))))
-                        yas-snippet-dirs)))
+        (when
+            (member
+             s (apply 'append
+                      (mapcar
+                       (lambda (dir)
+                         (let ((dir (concat
+                                     (file-name-as-directory
+                                      (if (symbolp dir) (symbol-value dir) dir))
+                                     "org-mode")))
+                           (when (f-directory-p dir)
+                             (directory-files dir))))
+                       yas-snippet-dirs)))
           (org-show-block-lines))))))
 
 (defun org-show-block-lines ()
@@ -146,7 +147,7 @@ Please `previous-line' past org-block headers'"
   (cond (atchka-org-minor-mode
          ;; yasnippet
          (add-hook 'yas-before-expand-snippet-hook 'yas--show-org-block-lines t)
-         (add-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines t)
+         (add-hook 'yas-after-exit-snippet-hook 'org-hide-block-lines)
          ;; next/prev line
          (advice-add 'next-line :before 'org-skip-source-next-advice)
          (advice-add 'previous-line :before 'org-skip-source-previous-advice)
