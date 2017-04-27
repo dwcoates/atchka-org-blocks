@@ -53,17 +53,19 @@
   "Show the Org-block lines.
 This is useful because the atchka theme obfuscates block markup."
   (interactive)
-  (set-face-attribute 'org-block-begin-line
-                      (selected-frame)
-                      :height 100
-                      :foreground "black"))
+  (when (eq major-mode 'org-mode)
+    (set-face-attribute 'org-block-begin-line
+                        (selected-frame)
+                        :height 100
+                        :foreground "black")))
 
 (defun org-hide-block-lines ()
   "Hide the org block lines."
   (interactive)
-  (set-face-attribute 'org-block-begin-line nil
-                      :height (truncate (* atchka--org-block-header-height 10))
-                      :foreground (face-attribute 'org-block-begin-line :background)))
+  (when (eq major-mode 'org-mode)
+    (set-face-attribute 'org-block-begin-line nil
+                        :height (truncate (* atchka--org-block-header-height 10))
+                        :foreground (face-attribute 'org-block-begin-line :background))))
 
 (defun org-skip-source-next-advice ()
   "Advice for the `next-line' function.
